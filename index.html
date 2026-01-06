@@ -1,0 +1,251 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<title>けいさんれんしゅう</title>
+
+<style>
+body {
+  font-family: "Hiragino Kaku Gothic ProN", Meiryo, sans-serif;
+  background: #f5f7fa;
+  text-align: center;
+}
+
+h1 { margin-top: 10px; }
+
+button {
+  padding: 10px 14px;
+  margin: 4px;
+  font-size: 15px;
+  cursor: pointer;
+  border-radius: 10px;
+  border: 1px solid #ccc;
+  background: #fff;
+}
+
+button:hover { background: #e0f2f1; }
+
+button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.selected {
+  background: #4caf50;
+  color: #fff;
+  font-weight: bold;
+}
+
+#menu, #game {
+  background: #fff;
+  width: 420px;
+  margin: 20px auto;
+  padding: 16px;
+  border-radius: 14px;
+  box-shadow: 0 4px 10px rgba(0,0,0,.1);
+}
+
+#calc {
+  font-family: monospace;
+  font-size: 36px;
+  width: 240px;
+  margin: 20px auto;
+  text-align: right;
+}
+
+.line {
+  border-top: 3px solid #000;
+  margin: 6px 0;
+}
+
+.correct {
+  color: green;
+  font-size: 26px;
+  animation: pop .4s ease-out;
+}
+
+.wrong {
+  color: red;
+  font-size: 22px;
+}
+
+@keyframes pop {
+  0% { transform: scale(.6); opacity: 0; }
+  100% { transform: scale(1); opacity: 1; }
+}
+
+#history {
+  text-align: left;
+  max-height: 180px;
+  overflow-y: auto;
+  font-size: 14px;
+  background: #f0f0f0;
+  padding: 8px;
+  border-radius: 6px;
+}
+</style>
+</head>
+
+<body>
+
+<h1>けいさんれんしゅう</h1>
+
+<div id="menu">
+  <p>しゅるい</p>
+  <button class="op-btn" onclick="selectOp('+',this)">たしざん</button>
+  <button class="op-btn" onclick="selectOp('-',this)">ひきざん</button>
+  <button class="op-btn" onclick="selectOp('×',this)">かけざん</button>
+  <button class="op-btn" onclick="selectOp('÷',this)">わりざん</button>
+
+  <p>けたのくみあわせ</p>
+  <div id="digitArea"></div>
+
+  <br>
+  <button onclick="start()">スタート</button>
+</div>
+
+<div id="game" hidden>
+  <div id="calc"></div>
+
+  <input id="answer" type="number">
+  <button id="checkBtn" onclick="check()">こたえ</button>
+
+  <div id="result"></div>
+
+  <h3>りれき</h3>
+  <div id="history"></div>
+
+  <br>
+  <button onclick="next()">つぎ</button>
+  <button onclick="clearHistory()">りれきクリア</button>
+  <button onclick="back()">もどる</button>
+</div>
+
+<script>
+let op=null, digits=null;
+let a,b,correct;
+let history=[];
+
+const digitOptions={
+  "+":[[1,1],[2,1],[2,2],[3,2],[3,3]],
+  "-":[[1,1],[2,1],[2,2],[3,2],[3,3]],
+  "×":[[1,1],[2,1],[2,2]],
+  "÷":[[1,1],[2,1],[3,1]]
+};
+
+function selectOp(o,btn){
+  op=o; digits=null;
+  document.querySelectorAll(".op-btn").forEach(b=>b.classList.remove("selected"));
+  btn.classList.add("selected");
+  renderDigitOptions();
+}
+
+function renderDigitOptions(){
+  const area=document.getElementById("digitArea");
+  area.innerHTML="";
+  digitOptions[op].forEach(d=>{
+    const b=document.createElement("button");
+    b.textContent=`${d[0]}けた ${op} ${d[1]}けた`;
+    b.onclick=()=>selectDigits(d,b);
+    area.appendChild(b);
+  });
+}
+
+function selectDigits(d,btn){
+  digits=d;
+  document.querySelectorAll("#digitArea button")
+    .forEach(b=>b.classList.remove("selected"));
+  btn.classList.add("selected");
+}
+
+function rand(d){
+  const min=10**(d-1), max=10**d-1;
+  return Math.floor(Math.random()*(max-min+1))+min;
+}
+
+function start(){
+  if(!op||!digits){
+    alert("しゅるいとけたをえらんでね");
+    return;
+  }
+  menu.hidden=true;
+  game.hidden=false;
+  next();
+}
+
+function back(){
+  menu.hidden=false;
+  game.hidden=true;
+}
+
+function next(){
+  answer.value="";
+  answer.disabled=false;
+  checkBtn.disabled=false;
+  result.textContent="";
+  createProblem();
+  answer.focus();
+}
+
+function createProblem(){
+  a=rand(digits[0]);
+  b=rand(digits[1]);
+
+  if(op==="-"&&b>a)[a,b]=[b,a];
+  if(op==="÷"){ a=b*rand(digits[0]); }
+
+  correct=evalCalc();
+  drawCalc();
+}
+
+function evalCalc(){
+  return op==="+"?a+b:
+         op==="-"?a-b:
+         op==="×"?a*b:
+         a/b;
+}
+
+function drawCalc(){
+  calc.innerHTML=`
+    <div>${a}</div>
+    <div>${op} ${b}</div>
+    <div class="line"></div>`;
+}
+
+function check(){
+  if(answer.value==="")return;
+  const v=Number(answer.value);
+  const ok=v===correct;
+  result.textContent=ok?"せいかい！🎉":"ざんねん…";
+  result.className=ok?"correct":"wrong";
+  if(ok) calc.innerHTML+=`<div>${correct}</div>`;
+  answer.disabled=true;
+  checkBtn.disabled=true;
+  addHistory(v,ok);
+}
+
+function addHistory(v,ok){
+  history.unshift(`${a} ${op} ${b} = ${v} ${ok?"○":"×（正:"+correct+"）"}`);
+  historyDiv.innerHTML=history.map(h=>`<div>${h}</div>`).join("");
+}
+
+function clearHistory(){
+  history=[];
+  historyDiv.innerHTML="";
+}
+
+document.addEventListener("keydown",e=>{
+  if(e.key==="Enter"&&!checkBtn.disabled)check();
+});
+
+const menu=document.getElementById("menu");
+const game=document.getElementById("game");
+const answer=document.getElementById("answer");
+const checkBtn=document.getElementById("checkBtn");
+const result=document.getElementById("result");
+const calc=document.getElementById("calc");
+const historyDiv=document.getElementById("history");
+</script>
+
+</body>
+</html>
