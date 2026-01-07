@@ -125,6 +125,7 @@ button:disabled {
 let op=null, digits=null;
 let a,b,correct;
 let history=[];
+let correctSound=null;
 
 const digitOptions={
   "+":[[1,1],[2,1],[2,2],[3,2],[3,3]],
@@ -133,6 +134,10 @@ const digitOptions={
   "÷":[[1,1],[2,1],[3,1]]
 };
 
+function initSound(){
+  correctSound=new Audio("correct.mp3");
+  correctSound.load();
+}
 
 function selectOp(o,btn){
   op=o; digits=null;
@@ -219,12 +224,21 @@ function check(){
   const ok=v===correct;
   result.textContent=ok?"せいかい！🎉":"ざんねん…";
   result.className=ok?"correct":"wrong";
-  if(ok) calc.innerHTML+=`<div>${correct}</div>`;
-  const audio = new Audio('correct.mp3');
-  audio.play();
+  if(ok){
+    calc.innerHTML+=`<div>${correct}</div>`;
+    playSound();
+  }
   answer.disabled=true;
   checkBtn.disabled=true;
   addHistory(v,ok);
+}
+
+function playSound(){
+  if(!correctSound){
+    initSound();
+  }
+  correctSound.currentTime=0;
+  correctSound.play().catch(e=>console.log("音声再生エラー:",e));
 }
 
 function addHistory(v,ok){
@@ -240,6 +254,8 @@ function clearHistory(){
 document.addEventListener("keydown",e=>{
   if(e.key==="Enter"&&!checkBtn.disabled)check();
 });
+
+initSound();
 
 const menu=document.getElementById("menu");
 const game=document.getElementById("game");
