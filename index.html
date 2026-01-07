@@ -213,35 +213,6 @@ function drawCalc(){
     <div class="line"></div>`;
 }
 
-let correctSound;
-let audioUnlocked = false;
-
-/* iOS対策：音声アンロック */
-function unlockAudio() {
-  if (audioUnlocked) return;
-
-  correctSound.play().then(() => {
-    correctSound.pause();
-    correctSound.currentTime = 0;
-    audioUnlocked = true;
-  }).catch(() => {});
-}
-
-/* 初期化 */
-window.addEventListener("DOMContentLoaded", () => {
-  correctSound = document.getElementById("correctSound");
-
-  // 最初のユーザー操作で必ず解除
-  document.addEventListener("touchstart", unlockAudio, { once: true });
-  document.addEventListener("click", unlockAudio, { once: true });
-});
-function playCorrectSound() {
-  if (!audioUnlocked) return;
-
-  correctSound.currentTime = 0;
-  correctSound.play();
-}
-
 function check(){
   if(answer.value==="")return;
   const v=Number(answer.value);
@@ -249,7 +220,8 @@ function check(){
   result.textContent=ok?"せいかい！🎉":"ざんねん…";
   result.className=ok?"correct":"wrong";
   if(ok) calc.innerHTML+=`<div>${correct}</div>`;
-  playCorrectSound();
+  const audio = new Audio('correct.mp3');
+  audio.play();
   answer.disabled=true;
   checkBtn.disabled=true;
   addHistory(v,ok);
@@ -277,6 +249,5 @@ const result=document.getElementById("result");
 const calc=document.getElementById("calc");
 const historyDiv=document.getElementById("history");
 </script>
-<audio id="correctSound" src="correct.mp3" preload="auto"></audio>
 </body>
 </html>
