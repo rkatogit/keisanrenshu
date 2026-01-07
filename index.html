@@ -133,12 +133,6 @@ const digitOptions={
   "÷":[[1,1],[2,1],[3,1]]
 };
 
-function playCorrectSound() {
-  const sound = document.getElementById("correctSound");
-  sound.currentTime = 0; 
-  sound.play();
-}
-
 
 function selectOp(o,btn){
   op=o; digits=null;
@@ -217,6 +211,35 @@ function drawCalc(){
     <div>${a}</div>
     <div>${op} ${b}</div>
     <div class="line"></div>`;
+}
+
+let correctSound;
+let audioUnlocked = false;
+
+/* iOS対策：音声アンロック */
+function unlockAudio() {
+  if (audioUnlocked) return;
+
+  correctSound.play().then(() => {
+    correctSound.pause();
+    correctSound.currentTime = 0;
+    audioUnlocked = true;
+  }).catch(() => {});
+}
+
+/* 初期化 */
+window.addEventListener("DOMContentLoaded", () => {
+  correctSound = document.getElementById("correctSound");
+
+  // 最初のユーザー操作で必ず解除
+  document.addEventListener("touchstart", unlockAudio, { once: true });
+  document.addEventListener("click", unlockAudio, { once: true });
+});
+function playCorrectSound() {
+  if (!audioUnlocked) return;
+
+  correctSound.currentTime = 0;
+  correctSound.play();
 }
 
 function check(){
